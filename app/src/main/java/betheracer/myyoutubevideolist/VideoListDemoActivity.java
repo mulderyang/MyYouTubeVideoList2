@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +30,14 @@ import com.google.android.youtube.player.YouTubePlayerFragment;
 import com.google.android.youtube.player.YouTubeThumbnailLoader;
 import com.google.android.youtube.player.YouTubeThumbnailView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -197,6 +206,87 @@ public class VideoListDemoActivity extends Activity implements OnFullscreenListe
         private static final List<VideoEntry> VIDEO_LIST;
         static {
             final List<VideoEntry> list = new ArrayList<VideoEntry>();
+
+            Thread w = new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    BufferedReader buf_reader = null;
+                    String response = null;
+
+                    try {
+                        StringBuffer json_data = new StringBuffer();
+                        String strUrl = "https://www.googleapis.com/youtube/v3/playlistItems?" +
+                                "part=snippet&" +
+                                "maxResults=50&" +
+                                "playlistId=PLrS1t1kMynIUJPy95xGOaih6vdAhRAJZd&" +
+                                "key=AIzaSyBzXK4ihJxxJWXtqaeEl179x-8iuR-KF74";
+
+
+                        URL url = new URL(strUrl);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.connect();
+
+                        int responseCode = conn.getResponseCode();
+
+                        if(responseCode == 200) {
+                            InputStream iStream = conn.getInputStream();
+                            InputStreamReader reader = new InputStreamReader(iStream);
+                            buf_reader = new BufferedReader(reader);
+
+                            String line = null;
+                            while(true) {
+                                line = buf_reader.readLine();
+                                if(line == null) {
+                                    break;
+                                }
+                                json_data.append(line);
+                            }
+
+                            response = json_data.toString();
+                        }
+                        else {
+                            return;
+                        }
+
+                    }catch (Exception e){
+                        Log.d("Exception downloading", e.toString());
+                    }finally{
+                        try {
+                            buf_reader.close();
+                        } catch (Exception e1) {
+                            Log.d("exception", e1.toString());
+                        }
+                    }
+
+
+                    // JSON Parser
+
+                    try {
+                        JSONObject jsonObject = new JSONObject(response);
+                        //String kind = jsonObject.getString("kind");
+                        //String etag = jsonObject.getString("etag");
+                        //JSONObject pageInfo = jsonObject.getJSONObject("pageInfo");
+                        JSONArray items = jsonObject.getJSONArray("items");
+
+                        for(int i=0; i<items.length(); i++) {
+                            JSONObject snippet = items.getJSONObject(i).getJSONObject("snippet");
+                            String desc = snippet.getString("description");
+                            JSONObject resourceId = snippet.getJSONObject("resourceId");
+                            String videoId = resourceId.getString("videoId");
+                            list.add(new VideoEntry(desc, videoId));
+                        }
+
+                    } catch (Exception e2) {
+                        e2.printStackTrace();
+                    }
+
+
+
+                }
+            });
+            w.start();
+
             list.add(new VideoEntry("YouTube Collection", "Y_UmWdcTrrc"));
             list.add(new VideoEntry("GMail Tap", "1KhZKNZO8mQ"));
             list.add(new VideoEntry("Chrome Multitask", "UiLSiqyDf4Y"));
