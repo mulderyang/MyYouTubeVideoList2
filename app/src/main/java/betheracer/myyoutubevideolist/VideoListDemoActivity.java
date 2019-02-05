@@ -219,8 +219,8 @@ public class VideoListDemoActivity extends Activity implements OnFullscreenListe
                         String strUrl = "https://www.googleapis.com/youtube/v3/playlistItems?" +
                                 "part=snippet&" +
                                 "maxResults=50&" +
-                                "playlistId=PLrS1t1kMynIUJPy95xGOaih6vdAhRAJZd&" +
-                                "key=AIzaSyBzXK4ihJxxJWXtqaeEl179x-8iuR-KF74";
+                                "playlistId=PLiY9Ff7ROyFdDvkNc-PN4b_ftIgEDu599&" +
+                                "key=AIzaSyDSMXl8iNNcxXVTvjo8T0zCSf9R72m9adk";
 
 
                         URL url = new URL(strUrl);
